@@ -91,7 +91,7 @@ class MessageHandler(tornado.websocket.WebSocketHandler):
 # Return the interface we need to bind to.
 def get_bind_interface():
     ipaddr = os.getenv("OPENSHIFT_PYTHON_IP")
-    return ipaddr if ipaddr else "192.9.201.8"
+    return ipaddr if ipaddr else "0.0.0.0"
 
 
 def get_bind_interface_port():
@@ -99,7 +99,7 @@ def get_bind_interface_port():
     try:
         port = int(port)
     except TypeError:
-        port = 8000
+        port = 5000
     return port
 
 # Server main.

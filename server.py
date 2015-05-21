@@ -14,11 +14,6 @@ class Hello(tornado.web.RequestHandler):
     def get(self):
         self.write("<h1><a href=\"http://malu.me\">This is test for websocket.</a></h1>")
 
-# app = tornado.web.Application([
-#     (r"/", Hello),
-#     (r"/static/(.*)", tornado.web.StaticFileHandler, {"path":"html/static"})
-# ])
-
 class Application(tornado.web.Application):
 	def __init__(self):
 		handlers = [
@@ -32,8 +27,8 @@ class Application(tornado.web.Application):
 class MessageHandler(tornado.websocket.WebSocketHandler):
 	waiters = set()
 
-	# def check_origin(self, origin):
-	# 	return True
+	def check_origin(self, origin):
+		return True
 
 	def open(self,id):
 		val = id.split('&')

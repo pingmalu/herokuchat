@@ -9,15 +9,37 @@ import tornado.ioloop
 import tornado.web
 import tornado.options
 import tornado.websocket
+USERCON = 0
+initial_value = 0
+list_len = 10
+mlist = [initial_value]*list_len
+# print mlist
+# sample_list ==[0,0,0,0,0]
 
 class Hello(tornado.web.RequestHandler):
     def get(self):
-        self.write("<h1><a href=\"http://malu.me\">This is test for websocket.</a></h1>")
+        self.write('<h1><a href="http://malu.me">This is test for websocket.</a></h1>')
+class status(tornado.web.RequestHandler):
+    def set_default_headers(self):
+        self.set_header('Access-Control-Allow-Origin', '*')
+    def get(self):
+	global USERCON
+        self.write(str(USERCON))
+class history(tornado.web.RequestHandler):
+    def set_default_headers(self):
+        self.set_header('Access-Control-Allow-Origin', '*')
+    def get(self):
+	global mlist
+        self.write(tornado.escape.json_encode(mlist))
 
 class Application(tornado.web.Application):
 	def __init__(self):
 		handlers = [
 			(r"/", Hello),
+			(r"/stat", status),
+			(r"/stat/", status),
+			(r"/history", history),
+			(r"/history/", history),
 			(r'/message/(.+)', MessageHandler),
 			(r"/static/(.*)", tornado.web.StaticFileHandler, {"path":"static"})
 		]
@@ -34,22 +56,30 @@ class MessageHandler(tornado.websocket.WebSocketHandler):
 		val = id.split('&')
 		if(val[0]==''):
 			return
+		#self.id = enreplace_html(val[0])
 		self.id = val[0]
 		self.name = ''
 		if (len(val) > 1):
+			#self.name = enreplace_html(val[1])
 			self.name = val[1]
+		if (ck_login(self.id)):
+			self.on_close(self)
+			return
 		MessageHandler.waiters.add(self)
 		self.broadcast('{"u":"getall"}')
 		self.broadcast('{"u":"'+self.id+'","msg":"Hi,'+self.id+' 欢迎来到IM.malu.me 您可以开始聊天了!","img":"img/f-1.png","user":"ADMIN"}')
 
 	def on_close(self):
-#		tmpStr = 'php /var/www/html-app/webcallcenter/artisan queue:off --name=' + self.name
+#		tmpStr = 'php /var/www/html/a.php queue:off --name=' + self.name
 #		os.system(tmpStr)
 		MessageHandler.waiters.remove(self)
 		self.broadcast('{"u":"getall"}')
 
 	@classmethod
 	def broadcast(cls,msg):
+		global USERCON
+		global mlist
+		global list_len
 		reload(sys)
 		sys.setdefaultencoding('utf-8')
 		try:
@@ -59,9 +89,15 @@ class MessageHandler(tornado.websocket.WebSocketHandler):
 			return
 		if(ids == 'getall'):
 			wats = []
+			USERCON = 0
 			for waiter in cls.waiters:
 				wats.append(waiter.id+":"+waiter.name)
+				USERCON = USERCON+1
 			wats = list(set(wats))
+		if(ids== 'all'):
+			for i in range(0, list_len-1):
+				mlist[i] = mlist[i+1]
+			mlist[list_len - 1] = msg
 		for waiter in cls.waiters:
 			try:
 				if(ids == 'all'):
@@ -83,6 +119,19 @@ class MessageHandler(tornado.websocket.WebSocketHandler):
 		self.broadcast(msg)
 
 # Server main.
+def ck_login(s):
+    has = False
+    if '&' in s:
+	has = True
+    if '"' in s:
+	has = True
+    if '<' in s:
+	has = True
+    if '>' in s:
+	has = True
+    if( len(s) > 20 ):
+	has = True
+    return has
 def start_tornado():
     zserver = Application()
     port = int(os.environ.get("PORT", 5000))

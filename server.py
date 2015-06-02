@@ -18,7 +18,7 @@ mlist = [initial_value]*list_len
 
 class Hello(tornado.web.RequestHandler):
     def get(self):
-        self.write('<h1><a href="http://malu.me">This is test for websocket.</a></h1>')
+        self.write('<h1><a href="http://im.malu.me">This is webserver for websocket.</a></h1>')
 class status(tornado.web.RequestHandler):
     def set_default_headers(self):
         self.set_header('Access-Control-Allow-Origin', '*')
@@ -67,7 +67,7 @@ class MessageHandler(tornado.websocket.WebSocketHandler):
 			return
 		MessageHandler.waiters.add(self)
 		self.broadcast('{"u":"getall"}')
-		self.broadcast('{"u":"'+self.id+'","msg":"Hi,'+self.id+' 欢迎来到IM.malu.me 您可以开始聊天了!","img":"img/f-1.png","user":"ADMIN"}')
+		self.broadcast('{"u":"'+self.id+'","msg":"Hi '+self.id+',欢迎来到 IM.malu.me 您可以开始聊天了!","img":"http://www.malu.me/im/img/f-1.png","user":"ADMIN"}')
 
 	def on_close(self):
 #		tmpStr = 'php /var/www/html/a.php queue:off --name=' + self.name
@@ -134,7 +134,7 @@ def ck_login(s):
     return has
 def start_tornado():
     zserver = Application()
-    port = int(os.environ.get("PORT", 5000))
+    port = int(os.environ.get("PORT", 8000))
     zserver.listen(port)
     tornado.ioloop.IOLoop.instance().start()
 
